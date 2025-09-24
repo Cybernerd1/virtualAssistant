@@ -3,13 +3,15 @@ import User from '../models/user.model.js';
 import genToken from '../config/token.js';
 export const signUp= async(req,res)=>{
     try {
+        console.log("Request body:", req.body);
         const {name,email,password}=req.body;
         if(!name || !email || !password){
             return res.status(400).json({message:"All fields are required"});
         }
 
-        const existingEmail = await UserActivation.findOne({email});
+        const existingEmail = await User.findOne({email});
         if(existingEmail){
+            console.log("Email already exists")
             return res.status(400).json({message:"Email already exists"});
         }
 
@@ -95,7 +97,7 @@ export const Login= async(req,res)=>{
 
 export const Logout= async(req,res)=>{
     try {
-        await req.clearCookie('token');
+        await res.clearCookie('token');
 
         res.status(200).json({message:"User logged out successfully"});
 
