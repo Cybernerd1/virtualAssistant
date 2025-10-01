@@ -4,10 +4,11 @@ import bg from '../assets/authBg.png'
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from "react-router-dom"
 import { userDataContext } from '../context/userContext';
+import Home from './Home';
 import axios from "axios";
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false)
-  const { serverUrl } = useContext(userDataContext)
+  const { serverUrl,userData,setUserData } = useContext(userDataContext)
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,10 +22,13 @@ const SignIn = () => {
     setLoading(true);
     try {
       let result = await axios.post(`${serverUrl}/api/auth/login`, { email, password }, { withCredentials: true })
-      console.log(result)
+      setUserData(result.data);
+      // console.log(result)
       setLoading(false);
+      navigate("/");
     } catch (error) {
       console.error(error);
+      setUserData(null);
       setError(error.response.data.message);
       setLoading(false);
     }
@@ -45,7 +49,7 @@ const SignIn = () => {
       *{error} </p>}
         <button className='min-w-[150px] h-[60px] bg-white rounded-full font-semibold text-black mt-[30px]' disabled={loading}>{loading?"signing in":"Sign In"}</button>
 
-        <p className='text-white text-[18px] '>Want to create a new account?<span onClick={() => navigate('/signup')} className='text-blue-400 cursor-pointer'>Sign in</span></p>
+        <p className='text-white text-[18px] '>Want to create a new account?<span onClick={() => navigate('/signup')} className='text-blue-400 cursor-pointer'>Sign Up</span></p>
       </form>
     </div>
   )

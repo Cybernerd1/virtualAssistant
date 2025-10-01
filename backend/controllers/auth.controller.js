@@ -23,7 +23,7 @@ export const signUp= async(req,res)=>{
 
         const user = await User.create({name,email,password:hashedPassword});
 
-        const token = await genToken(user?._id);
+        const token =  genToken(user?._id);
         res.cookie('token',token,{
             httpOnly:true,
             secure:false,
@@ -70,7 +70,7 @@ export const Login= async(req,res)=>{
             return res.status(400).json({message:"Invalid credentials"});
         }
 
-        const token = await genToken(user?._id);
+        const token =  genToken(user?._id);
         res.cookie('token',token,{
             httpOnly:true,
             secure:false,
@@ -97,7 +97,11 @@ export const Login= async(req,res)=>{
 
 export const Logout= async(req,res)=>{
     try {
-        await res.clearCookie('token');
+        await res.clearCookie('token',{
+            httpOnly: true,
+            secure: false, // Set to true in production with HTTPS
+            sameSite: 'strict'
+        });
 
         res.status(200).json({message:"User logged out successfully"});
 

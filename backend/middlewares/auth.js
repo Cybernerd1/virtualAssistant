@@ -1,8 +1,12 @@
+import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
+import express from "express";
+const app = express();
+app.use(cookieParser());
 
-import jwt from "jsonwebtoken"
 const isAuth=async (req,res,next)=>{
     try {
-        const token = req.cookies.token;
+        const token = req.cookies?.token;
         console.log("Token from cookie:", req.cookies.token);
 
         if (!token) {

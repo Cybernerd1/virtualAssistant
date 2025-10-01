@@ -5,9 +5,12 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from "react-router-dom"
 import { userDataContext } from '../context/userContext';
 import axios from "axios";
+
+
 const SignUp = () => {
+
   const [showPassword, setShowPassword] = useState(false)
-  const { serverUrl } = useContext(userDataContext)
+  const { serverUrl, userData, setUserData } = useContext(userDataContext)
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,10 +24,13 @@ const SignUp = () => {
     setLoading(true);
     try {
       let result = await axios.post(`${serverUrl}/api/auth/signup`, { name, email, password }, { withCredentials: true })
-      console.log(result)
+      setUserData(result.data);
+      // console.log(result)
       setLoading(false);
+      navigate("/customize");
     } catch (error) {
       console.error(error);
+      setUserData(null);
       setError(error.response.data.message);
       setLoading(false);
     }
@@ -41,11 +47,11 @@ const SignUp = () => {
           {showPassword && <EyeOff onClick={() => { setShowPassword(false) }} className='absolute top-[20px] right-[20px] text-white cursor-pointer' />}
 
         </div>
-    {error.length>0 && <p className='text-red-500 text-xl'>
-      *{error} </p>}
-        <button className='min-w-[150px] h-[60px] bg-white rounded-full font-semibold text-black mt-[30px]'>Sign Up</button>
+        {error.length > 0 && <p className='text-red-500 text-xl'>
+          *{error} </p>}
+        <button className='min-w-[150px] h-[60px] bg-white rounded-full font-semibold text-black mt-[30px]' disabled={loading}> {loading ? "signing up..." : "Sign Up"}</button>
 
-        <p className='text-white text-[18px] '>Already have an account?<span onClick={() => navigate('/signin')} className='text-blue-400 cursor-pointer' disabled={loading}>{loading?"signing up...":"Sign Up"}</span></p>
+        <p className='text-white text-[18px] '>Already have an account?<span onClick={() => navigate('/signin')} className='text-blue-400 cursor-pointer'>Sign In</span></p>
       </form>
     </div>
   )
