@@ -30,7 +30,7 @@ function UserContext({ children }) {
 
     const getGeminiResponse = async(command)=>{
         try {
-           const result = await axios.post(`${serverUrl}/api/user/askAssistant`,{command},{ withCredentials: true }); 
+           const result = await axios.post(`${serverUrl}/api/user/askAssistant`,{command:prompt},{ withCredentials: true }); 
            return result.data 
         } catch (error) {
             console.log(error);

@@ -288,12 +288,12 @@ const Home = () => {
 
 
     window.speechSynthesis.onvoiceschanged = () => {
-      const greetng = new SpeechSynthesisUtterance(`Hello ${userData?.user.userName}, how can I help you today?`);
-      greetng.lang = "hi-IN";
+      const greeting = new SpeechSynthesisUtterance(`Hello ${userData?.user.userName}, how can I help you today?`);
+      greeting.lang = "hi-IN";
       greeting.onend = () => {
         startTimeout();
       }
-      IoLogoWindows.speechSynthesis.speak(greetng);
+      IoLogoWindows.speechSynthesis.speak(greeting);
     }
 
 

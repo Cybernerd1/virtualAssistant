@@ -60,11 +60,13 @@ export const askAssistant = async (req, res) => {
     const assistantName = user.assistantName;
 
     const { command } = req.body;
-    user.history.push(command)
-    user.save()
+    user.history.push(command);
+    await user.save();
     let result = await geminiResponse(command, assistantName, userName);
-    res.json(result);
-
+    // res.json(result)
+    if (typeof result !== "string") {
+      return res.status(400).json({ message: "Invalid response from AI" });
+    }
     const jsonMatch = result.match(/{[\s\s]*}/);
 
     if (!jsonMatch) {
@@ -126,15 +128,13 @@ export const askAssistant = async (req, res) => {
         return res.status(500).json({
           // type: "general",
           // userInput: gemResult.userInput,
-          response:
-            "Sorry, I couldn't process your request. Please try again.",
+          response: "Sorry, I couldn't process your request. Please try again.",
         });
         break;
     }
 
-    return res.status(200).json({ success: true, gemResult });
+    // return res.status(200).json({ success: true, gemResult });
   } catch (error) {
     return res.status(400).json({ message: "ask assistant error" });
   }
 };
-
