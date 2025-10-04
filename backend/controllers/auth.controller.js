@@ -26,8 +26,8 @@ export const signUp= async(req,res)=>{
         const token =  genToken(user?._id);
         res.cookie('token',token,{
             httpOnly:true,
-            secure:false,
-            sameSite:'strict',
+            secure:true,
+            sameSite:'None',
             maxAge:7*24*60*60*1000 // 7 days
         })
         res.status(201).json({
@@ -73,8 +73,8 @@ export const Login= async(req,res)=>{
         const token =  genToken(user?._id);
         res.cookie('token',token,{
             httpOnly:true,
-            secure:false,
-            sameSite:'strict',
+            secure:true,
+            sameSite:'None',
             maxAge:7*24*60*60*1000 // 7 days
         })
         res.status(200).json({
