@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import bg from '../../public/assets/authBg.png'
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from "react-router-dom"
-import { userDataContext } from '../context/userContext';
+import { userDataContext } from '../context/UserContext';
 import axios from "axios";
 
 
