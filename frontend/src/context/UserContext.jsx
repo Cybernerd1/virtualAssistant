@@ -2,7 +2,8 @@ import React, { createContext, useEffect, useState } from 'react'
 import axios from 'axios';
 export const userDataContext = createContext()
 function UserContext({ children }) {
-    const serverUrl = "https://virtualassistant-bnkh.onrender.com"
+    // const serverUrl = "https://virtualassistant-bnkh.onrender.com"
+    const serverUrl = "http://localhost:3000"
     var [userData, setUserData] = useState(null);
     var [frontendImage, setFrontendImage] = useState(null);
     const [backendImage, setBackendImage] = useState(null);
@@ -30,10 +31,15 @@ function UserContext({ children }) {
 
     const getGeminiResponse = async(command)=>{
         try {
-           const result = await axios.post(`${serverUrl}/api/user/askAssistant`,{command:prompt},{ withCredentials: true }); 
+           const result = await axios.post(`${serverUrl}/api/user/askAssistant`,{command},{ withCredentials: true }); 
            return result.data 
         } catch (error) {
-            console.log(error);
+            console.log("Error in Gemini Response",error);
+            return {
+                type: "error",
+                userInput: command,
+                response: "Sorry, I couldn't process your request. Please try again."
+            };
         }
     }
 

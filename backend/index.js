@@ -27,7 +27,7 @@ app.use("/api/auth",authRouter);
 app.use("/api/user",userRouter);
 
 app.get("/", async (req,res)=>{
-    let prompt=req.query.prompt;
+    let prompt=req.query.command;
     let data = await geminiResponse(prompt);
     res.json(data);
 })
