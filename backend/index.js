@@ -5,6 +5,7 @@ import authRouter from './routes/auth.routes.js';
 import userRouter from './routes/user.routes.js';
 import cookieParser from 'cookie-parser';
 import cors from "cors"
+import geminiResponse from './gemini.js';
 dotenv.config()
 console.log(process.env.MONGO_URI);
 connectDB();
@@ -24,6 +25,13 @@ const PORT = process.env.PORT || 3000;
 
 app.use("/api/auth",authRouter);
 app.use("/api/user",userRouter);
+
+app.get("/", async (req,res)=>{
+    let prompt=req.query.prompt;
+    let data = await geminiResponse(prompt);
+    res.json(data);
+})
+
 app.listen(PORT, () => {
     
     console.log(`Server is running on port:${PORT}`);

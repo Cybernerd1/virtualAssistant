@@ -3,22 +3,40 @@ import axios from 'axios';
 export const userDataContext = createContext()
 function UserContext({ children }) {
     const serverUrl = "http://localhost:3000"
-    const [userData, setUserData] = useState(null);
-    const [frontendImage, setFrontendImage] = useState(null);
+    var [userData, setUserData] = useState(null);
+    var [frontendImage, setFrontendImage] = useState(null);
     const [backendImage, setBackendImage] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
-   
+    const [loading, setLoading] = useState(true); // Add loading state
+    const [error, setError] = useState(null); // Add error state
+
     const handleCurrentUser = async () => {
         try {
+            setLoading(true);
             const result = await axios.get(`${serverUrl}/api/user/current`, { withCredentials: true });
             console.log("Current user response:", result.data);
             setUserData(result.data || null);
-           
+            setError(null); 
+
         } catch (error) {
             console.error("Error fetching current user:", error);
             setUserData(null);
+            setError(error.message || "An error occurred");
+        }finally{
+            setLoading(false);
         }
     }
+
+
+    const getGeminiResponse = async(command)=>{
+        try {
+           const result = await axios.post(`${serverUrl}/api/user/askAssistant`,{command},{ withCredentials: true }); 
+           return result.data 
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
 
     useEffect(() => {
         handleCurrentUser();
@@ -26,7 +44,8 @@ function UserContext({ children }) {
 
 
     const value = {
-        serverUrl, userData, setUserData,selectedImage, setSelectedImage,frontendImage, setFrontendImage,backendImage, setBackendImage
+        serverUrl, userData, setUserData, selectedImage, setSelectedImage, frontendImage, setFrontendImage, backendImage, setBackendImage,loading, 
+        error,getGeminiResponse
     }
 
 

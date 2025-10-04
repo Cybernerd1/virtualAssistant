@@ -17,6 +17,8 @@ const Home = () => {
   const [listening, setListening] = useState(false);
   const isSpeakingRef = useRef(false);
   const recognitionRef = useRef(null);
+  const isRecognizingRef = useRef(false);
+  const restartTimeoutRef = useRef(null);
   const synth = window.speechSynthesis;
 
   const handleLogout = async () => {
@@ -58,25 +60,20 @@ const Home = () => {
 
   const speak = (text) => {
     const utterence = new SpeechSynthesisUtterance(text);
+    utterence.lang = "en-US";
     isSpeakingRef.current = true;
+    
     utterence.onend = () => {
       isSpeakingRef.current = false;
-      // if (recognitionRef.current && !listening) {
-      //   setTimeout(() => {
-      //     try {
-      //       recognitionRef.current.start();
-      //       setListening(true);
-      //     } catch (error) {
-      //       if (error.name !== "InvalidStateError") {
-      //         console.error("Error starting recognition:", error);
-      //       }
-      //     }
-      //   }, 1000);
-      // }
-      // recognitionRef.current?.start();
-    }
+      console.log("Speech synthesis ended");
+    };
+    
+    utterence.onerror = (event) => {
+      console.error("Speech synthesis error:", event);
+      isSpeakingRef.current = false;
+    };
+    
     synth.speak(utterence);
-    utterence.lang = "en-US";
   };
 
   const handleCommand = (data) => {
@@ -111,133 +108,155 @@ const Home = () => {
     if (type === "instagram_open") {
       window.open("https://www.instagram.com", "_blank");
     }
+    
     if (type === "facebook_open") {
       window.open("https://www.facebook.com", "_blank");
     }
+    
     if (type === "weather-show") {
       const query = encodeURIComponent(userInput);
       window.open(`https://www.google.com/search?q=${query}`, "_blank");
     }
   };
 
+  const startRecognition = () => {
+    if (!recognitionRef.current || isRecognizingRef.current || isSpeakingRef.current) {
+      return;
+    }
+
+    try {
+      recognitionRef.current.start();
+      isRecognizingRef.current = true;
+      setListening(true);
+      console.log("Recognition started");
+    } catch (error) {
+      if (error.name === "InvalidStateError") {
+        console.warn("Recognition already started");
+        isRecognizingRef.current = false;
+      } else {
+        console.error("Error starting recognition:", error);
+        isRecognizingRef.current = false;
+        setListening(false);
+      }
+    }
+  };
+
+  const scheduleRestart = (delay = 1000) => {
+    // Clear any existing timeout
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+    }
+
+    restartTimeoutRef.current = setTimeout(() => {
+      if (!isSpeakingRef.current && !isRecognizingRef.current) {
+        startRecognition();
+      }
+    }, delay);
+  };
+
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (
-      !("webkitSpeechRecognition" in window) &&
-      !("SpeechRecognition" in window)
-    ) {
+    if (!SpeechRecognition) {
       console.log("Speech recognition not supported in this browser.");
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
+    recognition.continuous = false; // Changed to false for better stability
+    recognition.interimResults = false;
     recognition.lang = "en-US";
+    recognition.maxAlternatives = 1;
 
     recognitionRef.current = recognition;
-    const isRecognizing = { current: false };
-
-    const safeRecognition = () => {
-      if (!isRecognizing.current && !isSpeakingRef.current) {
-        try {
-          recognitionRef.current.start();
-          isRecognizing.current = true;
-          setListening(true);
-          console.log("Recognition started");
-        } catch (error) {
-          if (error.name !== "InvalidStateError") {
-            console.error("Error starting recognition:", error);
-          }
-
-        }
-      }
-    };
 
     recognition.onstart = () => {
       console.log("Speech recognition started");
-      isRecognizing.current = true;
+      isRecognizingRef.current = true;
       setListening(true);
-    }
+    };
 
     recognition.onend = () => {
       console.log("Speech recognition ended");
-      isRecognizing.current = false;
+      isRecognizingRef.current = false;
       setListening(false);
 
-      if (!isSpeakingRef.current) {
-        setTimeout(() => {
-          safeRecognition();
-        }, 2000);
-
-      }
-    }
+      // Automatically restart after a short delay
+      scheduleRestart(1000);
+    };
 
     recognition.onerror = (event) => {
       console.warn("Speech recognition error:", event.error);
-      isRecognizing.current = false;
+      isRecognizingRef.current = false;
       setListening(false);
+
+      // Handle different error types
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        console.log("Permission to use microphone is denied.");
-      } else {
-        setTimeout(() => {
-          safeRecognition();
-        }, 2000);
+        console.error("Microphone permission denied. Please allow microphone access.");
+        return; // Don't restart if permission denied
       }
-    }
 
+      if (event.error === "network") {
+        console.log("Network error - will retry in 2 seconds");
+        scheduleRestart(2000);
+        return;
+      }
 
+      if (event.error === "no-speech") {
+        console.log("No speech detected - restarting");
+        scheduleRestart(500);
+        return;
+      }
 
-    recognition.onresult =async (e) => {
+      if (event.error === "aborted") {
+        console.log("Recognition aborted - restarting");
+        scheduleRestart(500);
+        return;
+      }
+
+      // For other errors, restart after a delay
+      scheduleRestart(1500);
+    };
+
+    recognition.onresult = async (e) => {
       const transcript = e.results[e.results.length - 1][0].transcript.trim();
       console.log("Recognized text:", transcript);
 
-      recognition.stop();
-      isRecognizing.current = false;
-      setListening(false);
-
-      const initSpeech = async () => {
-        if (
-          transcript
-            .toLowerCase()
-            .includes(userData?.user.assistantName.toLowerCase())
-        ) {
+      if (
+        transcript
+          .toLowerCase()
+          .includes(userData?.user.assistantName.toLowerCase())
+      ) {
+        try {
           const data = await getGeminiResponse(transcript);
           console.log(data);
-          speak(data.response);
           handleCommand(data);
+        } catch (error) {
+          console.error("Error getting Gemini response:", error);
         }
-      };
-      initSpeech();
+      }
     };
 
-    recognition.start();
+    // Initial start
+    startRecognition();
 
-    if (
-      !("webkitSpeechRecognition" in window) &&
-      !("SpeechRecognition" in window)
-    ) {
-      console.log("Speech recognition not supported in this browser.");
-      return;
-    
-    }
-
-    const fallback=setInterval(() => {
-      if(!isRecognizing.current && !isSpeakingRef.current){
-        safeRecognition();
-      }
-    },10000)
-    safeRecognition();
+    // Cleanup
     return () => {
-      recognition.stop();
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current);
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          console.log("Error stopping recognition:", error);
+        }
+      }
+      isRecognizingRef.current = false;
       setListening(false);
-      isRecognizing.current = false;
-      clearInterval(fallback);
-    }
-
-
-  }, []);
+    };
+  }, [userData?.user.assistantName]);
 
   return (
     <div className="w-full h-[100vh] bg-gradient-to-t from-[#000000] to-[#030353] flex justify-center items-center flex-col gap-[20px] relative ">
@@ -268,12 +287,27 @@ const Home = () => {
               "Image failed to load:",
               userData?.user.assistantImage
             );
-            e.target.src = "/placeholder-image.jpg"; // fallback image
+            e.target.src = "/placeholder-image.jpg";
             e.target.style.display = "none";
           }}
         />
       </div>
       <h1 className="text-white text-[18px] font-semibold">{`I'm ${userData?.user.assistantName}`}</h1>
+      
+      {/* Listening indicator */}
+      <div className="absolute bottom-10">
+        {listening ? (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <p className="text-white text-sm">Listening...</p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+            <p className="text-gray-400 text-sm">Idle</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

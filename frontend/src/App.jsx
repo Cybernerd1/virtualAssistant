@@ -4,13 +4,14 @@ import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
 import Customize from './pages/Customize'
 import Home from './pages/Home'
-import { userDataContext } from './context/userContext'
+
 import Customize2 from './pages/Customize2'
+import { userDataContext } from './context/UserContext'
 
 
 const App = () => {
   const { serverUrl, userData, setUserData } = useContext(userDataContext);
-
+  console.log(userData?.user)
   if (userData === undefined) {
     return <div>Loading...</div>;
   }
@@ -18,7 +19,7 @@ const App = () => {
   return (
 
     <Routes>
-      <Route path="/" element={(userData?.assistantImage && userData?.assistantName) ? <Home /> : <Navigate to={"/customize"} replace />} />
+      <Route path="/" element={(userData?.user.assistantImage && userData?.user.assistantName) ? <Home /> : <Navigate to={"/customize"} replace />} />
 
       <Route path="/signup" element={!userData ? <SignUp /> : <Navigate to={"/"} replace />} />
 
