@@ -38,7 +38,7 @@ const SignUp = () => {
   return (
     <div className='w-full h-[100vh] bg-cover flex justify-center items-center' style={{ backgroundImage: `url(${bg})` }}>
       <form onSubmit={handleSignUp} className='w-[90%] h-[600px] max-w-[500px] bg-[#00000037] backdrop-blur-md shadow-lg shadow-blue-950 flex flex-col items-center justify-center gap-[20px] px-[20px]'>
-        <h1 className='text-white text-[30px] font-semibold mb-[30px]'>Register to <span className='text-blue-400'> Virtual Assistant</span> </h1>
+        <h1 className='text-white text-[30px] font-semibold mb-[30px]'>Get Started with your <span className='text-blue-400'> Virtual Assistant</span> </h1>
         <input type='text' required onChange={(e) => setName(e.target.value)} value={name} placeholder='Enter Your Name' className='w-full outline-none h-[60px] border-2 border-white bg-transparent text-white placeholder:-gray-300 px-[20px] rounded-full text-[18px]' />
         <input type='text' placeholder='Enter Your Email' onChange={(e) => setEmail(e.target.value)} value={email} className='w-full outline-none h-[60px] border-2 border-white bg-transparent text-white placeholder:-gray-300 px-[20px] rounded-full text-[18px]' />
         <div className='border-2 border-white bg-transparent w-full rounded-full text-[18px] relative'>
