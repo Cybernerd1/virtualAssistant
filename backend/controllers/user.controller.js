@@ -60,6 +60,8 @@ export const askAssistant = async (req, res) => {
     const assistantName = user.assistantName;
 
     const { command } = req.body;
+    user.history.push(command)
+    user.save()
     let result = await geminiResponse(command, assistantName, userName);
     res.json(result);
 
@@ -113,7 +115,7 @@ export const askAssistant = async (req, res) => {
       case "calculator_open":
       case "instagram_open":
       case "facebook_open":
-      case "weather-show":
+      case "weather_show":
         return res.json({
           type,
           userInput: gemResult.userInput,
@@ -135,3 +137,4 @@ export const askAssistant = async (req, res) => {
     return res.status(400).json({ message: "ask assistant error" });
   }
 };
+
