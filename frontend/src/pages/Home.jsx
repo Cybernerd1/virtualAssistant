@@ -46,13 +46,13 @@ const Home = () => {
   // Enable voice with user interaction
   const enableVoice = () => {
     console.log("Enabling voice assistant...");
-    
+
     // Don't cancel during initial greeting
     const greeting = new SpeechSynthesisUtterance(
-      `Hello ${userData?.user.userName}, how can I help you today?`
+      `Hello ${userData?.user.name}, how can I help you today?`
     );
     greeting.lang = "en-US";
-    
+
     greetingUtteranceRef.current = greeting; // Store reference
 
     // Set voice if available
@@ -71,7 +71,7 @@ const Home = () => {
       console.log("Greeting complete, starting recognition");
       isSpeakingRef.current = false;
       greetingUtteranceRef.current = null; // Clear reference
-      
+
       // Start recognition after greeting completes
       setTimeout(() => {
         if (isMountedRef.current && voiceEnabled) {
@@ -84,7 +84,7 @@ const Home = () => {
       console.error("Greeting error:", e.error);
       isSpeakingRef.current = false;
       greetingUtteranceRef.current = null; // Clear reference
-      
+
       // Start recognition anyway if greeting fails (unless it's the initial interrupt)
       if (e.error !== "interrupted") {
         setTimeout(() => {
@@ -97,7 +97,7 @@ const Home = () => {
 
     // Set voice enabled FIRST, then speak
     setVoiceEnabled(true);
-    
+
     // Small delay to ensure state has updated before speaking
     setTimeout(() => {
       isSpeakingRef.current = true;
@@ -337,12 +337,60 @@ const Home = () => {
       isRecognizingRef.current = false;
       setListening(false);
 
-      // Check if the transcript contains the assistant name
-      if (
-        transcript
-          .toLowerCase()
-          .includes(userData?.user.assistantName.toLowerCase())
-      ) {
+      // Check if the transcript contains the assistant name (with fuzzy matching)
+      const transcriptLower = transcript.toLowerCase();
+      const assistantNameLower = userData?.user.assistantName?.toLowerCase() || "";
+      
+      // Simple Levenshtein distance for fuzzy matching
+      const levenshteinDistance = (a, b) => {
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) {
+          matrix[i] = [i];
+        }
+        for (let j = 0; j <= a.length; j++) {
+          matrix[0][j] = j;
+        }
+        for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+              matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+              matrix[i][j] = Math.min(
+                matrix[i - 1][j - 1] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j] + 1
+              );
+            }
+          }
+        }
+        return matrix[b.length][a.length];
+      };
+
+      // Check for exact match or fuzzy match
+      const words = transcriptLower.split(' ');
+      let nameDetected = false;
+      
+      for (const word of words) {
+        // Exact match
+        if (word === assistantNameLower) {
+          nameDetected = true;
+          break;
+        }
+        // Fuzzy match (allow 1-2 character difference for names 4+ chars)
+        const distance = levenshteinDistance(word, assistantNameLower);
+        const threshold = assistantNameLower.length >= 4 ? 2 : 1;
+        if (distance <= threshold) {
+          nameDetected = true;
+          console.log(`Fuzzy match found: "${word}" ≈ "${assistantNameLower}" (distance: ${distance})`);
+          break;
+        }
+      }
+      
+      console.log("Transcript:", transcript);
+      console.log("Assistant name:", userData?.user.assistantName);
+      console.log("Name detected:", nameDetected);
+      
+      if (nameDetected) {
         try {
           setAiText("Processing...");
           const data = await getGeminiResponse(transcript);
@@ -411,13 +459,13 @@ const Home = () => {
 
       isRecognizingRef.current = false;
       setListening(false);
-      
+
       // Only cancel if we're not in the middle of the initial greeting
       if (!greetingUtteranceRef.current) {
         synth.cancel();
       }
     };
-  }, [userData?.user.assistantName, userData?.user.userName, getGeminiResponse, voiceEnabled]);
+  }, [userData?.user.assistantName, userData?.user.name, getGeminiResponse, voiceEnabled]);
 
   // Loading state
   if (loading) {
@@ -450,17 +498,15 @@ const Home = () => {
     <div className="w-full h-[100vh] bg-gradient-to-t from-[#000000] to-[#030353] flex justify-center items-center flex-col gap-[20px] relative overflow-hidden">
       {/* Hamburger Menu Icon */}
       <IoMenu
-        className={`lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px] cursor-pointer z-50 ${
-          ham ? "hidden" : "block"
-        }`}
+        className={`lg:hidden text-white absolute top-[20px] right-[20px] w-[25px] h-[25px] cursor-pointer z-50 ${ham ? "hidden" : "block"
+          }`}
         onClick={() => setHam(true)}
       />
 
       {/* Mobile Menu */}
       <div
-        className={`absolute top-0 left-0 w-full h-full bg-[#00000053] backdrop-blur-lg ${
-          ham ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-300 z-40 flex flex-col items-center justify-start pt-20 gap-5`}
+        className={`absolute top-0 left-0 w-full h-full bg-[#00000053] backdrop-blur-lg ${ham ? "translate-x-0" : "translate-x-full"
+          } transition-transform duration-300 z-40 flex flex-col items-center justify-start pt-20 gap-5`}
       >
         <RxCross1
           className="text-white absolute top-[20px] right-[20px] w-[25px] h-[25px] cursor-pointer"
