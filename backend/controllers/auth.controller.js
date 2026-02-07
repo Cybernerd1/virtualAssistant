@@ -27,7 +27,7 @@ export const signUp= async(req,res)=>{
         res.cookie('token',token,{
             httpOnly:true,
             secure:true, // Set to true in production with HTTPS
-            sameSite:'lax',
+            sameSite:'none', // Changed to 'none' for cross-site cookies with secure:true
             maxAge:7*24*60*60*1000 // 7 days
         })
         res.status(201).json({
@@ -73,8 +73,8 @@ export const Login= async(req,res)=>{
         const token =  genToken(user?._id);
         res.cookie('token',token,{
             httpOnly:true,
-            secure:false, // Set to true in production with HTTPS
-            sameSite:'lax',
+            secure:true, // Set to true in production with HTTPS
+            sameSite:'none', // Changed to 'none' for cross-site cookies with secure:true
             maxAge:7*24*60*60*1000 // 7 days
         })
         res.status(200).json({
@@ -99,8 +99,8 @@ export const Logout= async(req,res)=>{
     try {
         await res.clearCookie('token',{
             httpOnly: true,
-            secure: false, // Set to true in production with HTTPS
-            sameSite: 'lax'
+            secure: true, // Set to true in production with HTTPS
+            sameSite: 'none' // Changed to 'none' for cross-site cookies with secure:true
         });
 
         res.status(200).json({message:"User logged out successfully"});
